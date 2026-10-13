@@ -83,6 +83,7 @@
             addButton.TabIndex = 1;
             addButton.Text = "追加";
             addButton.UseVisualStyleBackColor = true;
+            addButton.Click += addButton_Click;
             // 
             // deleteButton
             // 
@@ -254,7 +255,7 @@
             lowListBox.Size = new Size(780, 774);
             lowListBox.TabIndex = 0;
             // 
-            // Form1
+            // MainForm
             // 
             AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -275,7 +276,7 @@
             Controls.Add(editButton);
             Controls.Add(addButton);
             Controls.Add(inputFormLabel);
-            Name = "Form1";
+            Name = "MainForm";
             Text = "ToDoアプリ";
             tabControl1.ResumeLayout(false);
             highTabPage.ResumeLayout(false);

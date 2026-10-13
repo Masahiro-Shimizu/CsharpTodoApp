@@ -18,5 +18,8 @@ namespace TodoApp.Models
         public Priority Priority { get; set; }
         // 完了かどうか
         public bool Completed { get; set; }
+
+        // ListBoxに表示させるため
+        public override string ToString() => $"{Title} (期日: {DueDate:MM/dd})";
     }
 }
