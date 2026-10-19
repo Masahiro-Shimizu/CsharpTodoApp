@@ -96,6 +96,7 @@
             deleteButton.TabIndex = 3;
             deleteButton.Text = "削除";
             deleteButton.UseVisualStyleBackColor = true;
+            deleteButton.Click += deleteButton_Click;
             // 
             // taskInputTextBox
             // 
@@ -257,6 +258,7 @@
             middleListBox.Name = "middleListBox";
             middleListBox.Size = new Size(417, 358);
             middleListBox.TabIndex = 0;
+            middleListBox.SelectedIndexChanged += middleListBox_SelectedIndexChanged;
             // 
             // lowTabPage
             // 
@@ -279,6 +281,7 @@
             lowListBox.Name = "lowListBox";
             lowListBox.Size = new Size(421, 360);
             lowListBox.TabIndex = 0;
+            lowListBox.SelectedIndexChanged += lowListBox_SelectedIndexChanged;
             // 
             // MainForm
             // 
