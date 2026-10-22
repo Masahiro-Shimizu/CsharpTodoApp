@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TodoApp.Models
 {
-    internal class TodoItem
+    public class TodoItem
     {
         // タスク名
         public string Title { get; set; } = "";

@@ -1,4 +1,7 @@
+using TodoApp.Forms;
 using TodoApp.Models;
+using TodoApp.Services;
+using System.Diagnostics;
 
 namespace TodoApp
 {
@@ -8,10 +11,14 @@ namespace TodoApp
         // フィールド
         // newでインスタンス化
         private readonly List<TodoItem> _items = new(); // 本当のデータ
+
+        private readonly TodoStorage _storage = new();
         // コンストラクタ
         public MainForm()
         {
             InitializeComponent();
+            _items.AddRange(_storage.Load());
+            RefreshList();
         }
 
         /// <summary>
@@ -76,6 +83,9 @@ namespace TodoApp
 
             // リスト（_items）に作った todoItem を追加する　これがないとタスクが追加されない
             _items.Add(todoItem);
+
+            // 保存を呼ぶ
+            _storage.Save(_items);
 
             // 入力欄のクリアと画面の更新　順番逆でも変化はない
             taskInputTextBox.Clear();
@@ -173,6 +183,8 @@ namespace TodoApp
                 //    (注意: 消すのは ListBox ではなく _items。「本当のデータ」はこちら)
                 _items.Remove(selectedItem);
 
+                _storage.Save(_items);
+
                 // 6. 一覧を作り直す
                 //    (ヒント: 追加ボタンの最後と同じ。なぜ呼ぶのか、説明できる?)
                 RefreshList();
@@ -195,6 +207,47 @@ namespace TodoApp
                     return;
                 }
             }
+        }
+
+        private ListBox GetCurrentListBox()
+        {
+            return tabControl1.SelectedIndex switch
+            {
+                0 => highListBox,
+                1 => middleListBox,
+                _ => lowListBox
+            };
+        }
+
+        private void editButton_Click(object sender, EventArgs e)
+        {
+            ListBox currentListBox = GetCurrentListBox();
+
+            if (currentListBox.SelectedItem is not TodoItem selectedItem)
+            {
+                MessageBox.Show("タスクを選択してください。", "入力エラー",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (var editForm = new EditForm(selectedItem))
+            {
+                if (editForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    _storage.Save(_items);
+                    ShowTaskDetail(currentListBox);
+                    RefreshList();
+                }
+            }
+        }
+
+        private void openButton_Click(object sender, EventArgs e)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = _storage.FolderPath,
+                UseShellExecute = true
+            });
         }
     }
 }
