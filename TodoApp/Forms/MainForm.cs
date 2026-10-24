@@ -10,14 +10,24 @@ namespace TodoApp
     {
         // フィールド
         // newでインスタンス化
-        private readonly List<TodoItem> _items = new(); // 本当のデータ
+        // 本当のデータ。画面(ListBox)は、これを表示しているだけ
+        private readonly List<TodoItem> _items = new();
 
+        // 保存と読み込みを担当するクラス。MainForm からは、Save と Load を呼ぶだけでよい
         private readonly TodoStorage _storage = new();
+
         // コンストラクタ
         public MainForm()
         {
+            // デザイナーで置いた部品を作る。部品を使う前に、必ず先に呼ぶ
             InitializeComponent();
+
+            // 前回までに保存したタスクを、ファイルから読み込んで _items に入れる。
+            // 初回(ファイルがない)のときは、Load が空のリストを返すので、何も入らない
             _items.AddRange(_storage.Load());
+
+            // _items の内容を、ListBox に表示する。
+            // 読み込んだだけでは、画面に出ないので、ここで呼ぶ必要がある
             RefreshList();
         }
 
@@ -67,7 +77,7 @@ namespace TodoApp
             };
 
             // 画面の入力値から TodoItem のインスタンスを生成
-            TodoItem todoItem = new TodoItem　// {}内でそれぞれのデータに値を渡している　オブジェクトの初期化値
+            TodoItem todoItem = new TodoItem // {}内でそれぞれのデータに値を渡している　オブジェクトの初期化値
             {
                 // タスク名
                 Title = taskInputTextBox.Text,
@@ -85,6 +95,7 @@ namespace TodoApp
             _items.Add(todoItem);
 
             // 保存を呼ぶ
+            // 追加したら、すぐ保存する(アプリを閉じたときに失われないように)
             _storage.Save(_items);
 
             // 入力欄のクリアと画面の更新　順番逆でも変化はない
@@ -114,6 +125,7 @@ namespace TodoApp
                 dueDateTimePicker1.Value = selectedItem.DueDate;
             }
         }
+
         // 優先度高の中にあるタスクを選択したときに詳細欄に表示する処理
         private void highListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -157,8 +169,6 @@ namespace TodoApp
                 currentListBox = lowListBox;
             }
 
-
-
             // 3. 選ばれている行から TodoItem を取り出す
             //    (ヒント: ShowTaskDetail の is TodoItem selectedItem と同じ形)
             //    (取り出せなかったときは、ここでも終わる)
@@ -183,6 +193,7 @@ namespace TodoApp
                 //    (注意: 消すのは ListBox ではなく _items。「本当のデータ」はこちら)
                 _items.Remove(selectedItem);
 
+                // 削除も、すぐ保存する(開き直したときに復活しないように)
                 _storage.Save(_items);
 
                 // 6. 一覧を作り直す
@@ -209,8 +220,14 @@ namespace TodoApp
             }
         }
 
+        /// <summary>
+        /// いま開いているタブに対応する ListBox を返す。
+        /// 編集ボタンで「選択中のタスク」を探すときに使う。
+        /// </summary>
         private ListBox GetCurrentListBox()
         {
+            // タブの番号(0, 1, 2)から、対応する ListBox を選ぶ。
+            // 3つ目以降は、すべて低として扱う(タブが増えても null にならない)
             return tabControl1.SelectedIndex switch
             {
                 0 => highListBox,
@@ -219,10 +236,17 @@ namespace TodoApp
             };
         }
 
+        /// <summary>
+        /// 編集ボタンを押したときの処理。選択中のタスクを、編集ダイアログで書き換える。
+        /// </summary>
         private void editButton_Click(object sender, EventArgs e)
         {
+            // いま開いているタブの ListBox を取得する
             ListBox currentListBox = GetCurrentListBox();
 
+            // 選択されていない(または TodoItem ではない)なら、メッセージを出して終わる。
+            // is not は「TodoItem ではなかったら」という意味。
+            // この if を抜けたあとは、selectedItem が必ず使える
             if (currentListBox.SelectedItem is not TodoItem selectedItem)
             {
                 MessageBox.Show("タスクを選択してください。", "入力エラー",
@@ -230,22 +254,41 @@ namespace TodoApp
                 return;
             }
 
+            // using は、ダイアログを閉じたあとに、後片付けを自動でしてくれる書き方。
+            // 選んだタスクを、編集画面に渡して開く
             using (var editForm = new EditForm(selectedItem))
             {
+                // ShowDialog は、ダイアログが閉じるまで、ここで待つ。
+                // OKで閉じたときだけ、反映の処理をする(キャンセルなら何もしない)
                 if (editForm.ShowDialog(this) == DialogResult.OK)
                 {
+                    // EditForm が selectedItem を直接書き換えているので、
+                    // _items の中身はもう変わっている。ここでは、保存と画面の更新だけをする
                     _storage.Save(_items);
+
+                    // 詳細欄の更新は、RefreshList より前に呼ぶ。
+                    // RefreshList は ListBox を空にするので、選択も消えて、
+                    // 先に呼ぶと ShowTaskDetail が何もせずに終わってしまう
                     ShowTaskDetail(currentListBox);
                     RefreshList();
                 }
             }
         }
 
+        /// <summary>
+        /// 開くボタンを押したときの処理。保存ファイルがあるフォルダを、エクスプローラーで開く。
+        /// </summary>
         private void openButton_Click(object sender, EventArgs e)
         {
+            // Process.Start は、ほかのプログラム(ここではエクスプローラー)を起動する。
+            // フォルダのパスを渡すと、そのフォルダが開く
             Process.Start(new ProcessStartInfo
             {
+                // 開きたいフォルダの場所(TodoStorage が決めている)
                 FileName = _storage.FolderPath,
+
+                // .NET 6 以降では、これを true にしないと、フォルダやファイルを開けない。
+                // OS の標準の方法で開く、という意味
                 UseShellExecute = true
             });
         }

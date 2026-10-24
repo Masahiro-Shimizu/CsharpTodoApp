@@ -65,6 +65,7 @@
             editButton.TabIndex = 2;
             editButton.Text = "編集";
             editButton.UseVisualStyleBackColor = true;
+            editButton.Click += editButton_Click;
             // 
             // inputFormLabel
             // 
@@ -199,6 +200,7 @@
             openButton.TabIndex = 14;
             openButton.Text = "開く";
             openButton.UseVisualStyleBackColor = true;
+            openButton.Click += openButton_Click;
             // 
             // tabControl1
             // 
